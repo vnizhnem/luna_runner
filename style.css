@@ -1,4 +1,3 @@
-/* ===== СБРОС И БАЗОВЫЕ СТИЛИ ===== */
 * {
     margin: 0;
     padding: 0;
@@ -6,425 +5,249 @@
 }
 
 :root {
-    /* Фирменная палитра Luna */
     --graphite: #2a2a2a;
     --graphite-dark: #1a1a1a;
     --graphite-light: #3a3a3a;
     --gold: #ffd700;
     --gold-dark: #ccac00;
-    --gold-light: #ffed4a;
     --accent: #ff6b6b;
-    --text-light: #ffffff;
-    --text-muted: #b0b0b0;
-    --bg-canvas: #1e1e2e;
-    --border-color: #404040;
-    --success: #06d6a0;
+    --text: #ffffff;
+    --text-muted: #888888;
 }
 
 body {
-    font-family: 'Segoe UI', 'Roboto', sans-serif;
-    background: linear-gradient(135deg, var(--graphite-dark) 0%, var(--graphite) 100%);
-    color: var(--text-light);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--graphite-dark);
+    color: var(--text);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
-    line-height: 1.5;
 }
 
-/* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
 .container {
-    max-width: 900px;
+    max-width: 840px;
     width: 100%;
-    background: var(--graphite);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--border-color);
 }
 
-/* ===== ШАПКА ===== */
-.main-header {
-    background: var(--graphite-dark);
-    padding: 20px 30px;
-    border-bottom: 3px solid var(--gold);
+.header {
     text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid var(--gold);
 }
 
-.logo h1 {
-    font-size: 2.8rem;
+.header h1 {
+    font-size: 2.5rem;
     color: var(--gold);
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
     font-weight: 800;
 }
 
-.tagline {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-    letter-spacing: 1px;
-    font-weight: 300;
+.game-wrapper {
+    background: var(--graphite);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #404040;
 }
 
-/* ===== ПАНЕЛЬ СТАТИСТИКИ ===== */
-.stats-panel {
+.game-info {
     background: var(--graphite-light);
-    padding: 15px 30px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.score-display {
+    padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 20px;
 }
 
-.stat-box {
+.score-display {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}
+
+.score-box, .speed-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 120px;
+    min-width: 100px;
 }
 
-.stat-label {
-    font-size: 0.9rem;
+.score-box span, .speed-box span {
+    font-size: 0.8rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 5px;
-    font-weight: 600;
 }
 
-.stat-value {
-    font-size: 2.5rem;
-    color: var(--gold);
+.score, .speed {
+    font-size: 2rem;
     font-weight: 800;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.multiplier-display {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    min-width: 180px;
-}
-
-.multiplier-label {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-}
-
-.multiplier-value {
-    font-size: 1.8rem;
-    color: var(--success);
-    font-weight: 700;
-}
-
-.multiplier-bar {
-    width: 100%;
-    height: 8px;
-    background: var(--graphite-dark);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-}
-
-.multiplier-fill {
-    height: 100%;
-    background: linear-gradient(to right, var(--gold), var(--accent));
-    width: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-}
-
-/* ===== КОНТЕЙНЕР КАНВАСА ===== */
-.canvas-container {
-    position: relative;
-    padding: 20px;
-    background: var(--bg-canvas);
-}
-
-#gameCanvas {
-    display: block;
-    width: 100%;
-    height: 450px;
-    border-radius: 12px;
-    border: 2px solid var(--border-color);
-    background: #0f172a;
-}
-
-/* ===== ОВЕРЛЕЙ ЭКРАНОВ ===== */
-.screen-overlay {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    background: rgba(26, 26, 26, 0.95);
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-    border: 2px solid var(--gold);
-}
-
-.overlay-content {
-    text-align: center;
-    padding: 40px;
-    max-width: 500px;
-}
-
-.screen-overlay h2 {
     color: var(--gold);
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
 }
 
-.screen-overlay p {
-    color: var(--text-muted);
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    line-height: 1.6;
-}
-
-/* ===== КНОПКИ ===== */
-.btn-primary {
-    background: linear-gradient(145deg, var(--gold), var(--gold-dark));
-    color: var(--graphite-dark);
-    border: none;
-    padding: 18px 40px;
-    font-size: 1.3rem;
-    font-weight: 700;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 6px 0 var(--gold-dark);
-    min-width: 200px;
-}
-
-.btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 9px 0 var(--gold-dark);
-    background: linear-gradient(145deg, var(--gold-light), var(--gold));
-}
-
-.btn-primary:active {
-    transform: translateY(1px);
-    box-shadow: 0 3px 0 var(--gold-dark);
-}
-
-/* ===== ПАНЕЛЬ БОНУСОВ ===== */
-.bonus-panel {
-    background: var(--graphite-light);
-    padding: 15px 30px;
-    border-top: 1px solid var(--border-color);
+.speed {
+    color: #00ff88;
 }
 
 .bonus-tracker {
     display: flex;
-    justify-content: space-between;
     gap: 15px;
 }
 
 .bonus-counter {
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: var(--graphite-dark);
-    padding: 12px 20px;
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-    flex: 1;
-    transition: all 0.3s ease;
-}
-
-.bonus-counter:hover {
-    transform: translateY(-2px);
-    border-color: var(--gold);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.1);
-}
-
-.bonus-icon {
-    width: 36px;
-    height: 36px;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-}
-
-.counter-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.bonus-name {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-}
-
-.bonus-count {
-    font-size: 1.5rem;
-    color: var(--gold);
-    font-weight: 700;
-}
-
-/* ===== ИТОГИ ИГРЫ ===== */
-.final-score {
-    margin: 25px 0;
-}
-
-.score-label {
-    display: block;
-    color: var(--text-muted);
-    font-size: 1rem;
-    margin-bottom: 5px;
-}
-
-.score-value {
-    font-size: 3rem;
-    color: var(--gold);
-    font-weight: 800;
-}
-
-.bonus-summary {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin: 30px 0;
-}
-
-.bonus-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 8px;
+    background: var(--graphite);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #404040;
 }
 
-.bonus-icon-summary {
-    width: 40px;
-    height: 40px;
+.bonus-counter img {
+    width: 24px;
+    height: 24px;
     image-rendering: pixelated;
 }
 
-/* ===== ФУТЕР С УПРАВЛЕНИЕМ ===== */
-.control-footer {
-    background: var(--graphite-dark);
-    padding: 20px 30px;
-    border-top: 1px solid var(--border-color);
+.bonus-counter span {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 25px;
+    text-align: center;
 }
 
-.controls {
+.game-area {
+    position: relative;
+    width: 100%;
+    height: 600px;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(26, 26, 26, 0.95);
     display: flex;
     justify-content: center;
-    gap: 40px;
+    align-items: center;
+    z-index: 100;
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 40px;
+    background: var(--graphite);
+    border-radius: 12px;
+    border: 2px solid var(--gold);
+    max-width: 400px;
+}
+
+.overlay h2 {
+    color: var(--gold);
+    font-size: 2.2rem;
     margin-bottom: 15px;
 }
 
-.control-instruction {
+.overlay p {
+    color: var(--text-muted);
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+}
+
+.final-score {
+    margin: 20px 0;
+    font-size: 1.2rem;
+}
+
+.final-score strong {
+    color: var(--gold);
+    font-size: 2rem;
+}
+
+.btn {
+    background: var(--gold);
+    color: var(--graphite-dark);
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn:hover {
+    background: var(--gold-dark);
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.controls {
+    background: var(--graphite-light);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    border-top: 1px solid #404040;
+}
+
+.control-hint {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
 }
 
-.key-hint {
-    background: var(--graphite-light);
+.key {
+    background: var(--graphite);
     color: var(--gold);
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: 6px;
     font-weight: 700;
-    letter-spacing: 1px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--gold);
     min-width: 120px;
     text-align: center;
 }
 
-.control-instruction span {
+.control-hint span {
     color: var(--text-muted);
     font-size: 0.9rem;
 }
 
-.footer-note {
-    text-align: center;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
-}
-
-.footer-note p {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    letter-spacing: 1px;
-}
-
-/* ===== АНИМАЦИИ ===== */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
-.collecting {
-    animation: pulse 0.3s ease;
-}
-
-.new-record {
-    animation: float 2s infinite ease-in-out;
-}
-
-/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
-    .container {
-        border-radius: 15px;
-    }
-    
-    .logo h1 {
-        font-size: 2rem;
-    }
-    
-    .score-display {
+    .game-info {
         flex-direction: column;
         gap: 15px;
     }
     
-    .stat-box {
-        min-width: auto;
+    .score-display {
         width: 100%;
+        justify-content: space-around;
     }
     
     .bonus-tracker {
+        width: 100%;
+        justify-content: space-around;
         flex-wrap: wrap;
-    }
-    
-    .bonus-counter {
-        min-width: calc(50% - 10px);
-        flex-direction: column;
-        text-align: center;
-        padding: 10px;
-    }
-    
-    .counter-info {
-        align-items: center;
     }
     
     .controls {
@@ -432,39 +255,4 @@ body {
         gap: 15px;
         align-items: center;
     }
-    
-    .key-hint {
-        min-width: 150px;
-    }
-    
-    .overlay-content {
-        padding: 20px;
-    }
-    
-    .screen-overlay h2 {
-        font-size: 1.8rem;
-    }
-    
-    .bonus-summary {
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-}
-
-/* ===== УТИЛИТЫ ===== */
-.highlight {
-    color: var(--gold) !important;
-    font-weight: 700;
-}
-
-.text-center {
-    text-align: center;
-}
-
-.mb-20 {
-    margin-bottom: 20px;
-}
-
-.hidden {
-    display: none !important;
 }

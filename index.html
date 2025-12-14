@@ -5,151 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Luna Bar Runner</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
     <div class="container">
-        <!-- Главный заголовок -->
-        <header class="main-header">
-            <div class="logo">
-                <h1>LUNA BAR</h1>
-                <p class="tagline">Жди заказ • Собирай бонусы</p>
-            </div>
+        <header class="header">
+            <h1>LUNA BAR RUNNER</h1>
         </header>
 
-        <!-- Игровая область -->
-        <main class="game-area">
-            <!-- Панель статистики -->
-            <div class="stats-panel">
+        <main class="game-wrapper">
+            <div class="game-info">
                 <div class="score-display">
-                    <div class="stat-box">
-                        <span class="stat-label">СЧЁТ</span>
-                        <span id="currentScore" class="stat-value">0</span>
+                    <div class="score-box">
+                        <span>СЧЁТ</span>
+                        <div id="currentScore" class="score">0</div>
                     </div>
-                    <div class="stat-box">
-                        <span class="stat-label">РЕКОРД</span>
-                        <span id="highScore" class="stat-value">0</span>
+                    <div class="score-box">
+                        <span>РЕКОРД</span>
+                        <div id="highScore" class="score">0</div>
                     </div>
-                    <div class="multiplier-display">
-                        <span class="multiplier-label">МНОЖИТЕЛЬ</span>
-                        <span id="multiplierValue" class="multiplier-value">×1</span>
-                        <div id="multiplierBar" class="multiplier-bar">
-                            <div id="multiplierFill" class="multiplier-fill"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Игровой канвас -->
-            <div class="canvas-container">
-                <canvas id="gameCanvas" width="850" height="450"></canvas>
-                
-                <!-- Экран старта -->
-                <div id="startScreen" class="screen-overlay start-screen">
-                    <div class="overlay-content">
-                        <h2>ГОТОВ К ЗАКАЗУ?</h2>
-                        <p>Тапай для прыжка<br>Двойной тап — супер-прыжок</p>
-                        <button id="startBtn" class="btn-primary">▶ СТАРТ</button>
+                    <div class="speed-box">
+                        <span>СКОРОСТЬ</span>
+                        <div id="speedLevel" class="speed">x1.0</div>
                     </div>
                 </div>
                 
-                <!-- Экран завершения -->
-                <div id="gameOverScreen" class="screen-overlay game-over-screen" style="display: none;">
-                    <div class="overlay-content">
-                        <h2>ВРЕМЯ ВЫШЛО!</h2>
-                        <div class="final-score">
-                            <span class="score-label">ТВОЙ СЧЁТ:</span>
-                            <span id="finalScore" class="score-value">0</span>
-                        </div>
-                        <div class="bonus-summary">
-                            <div class="bonus-item">
-                                <img src="assets/ice.png" alt="Лёд" class="bonus-icon-summary">
-                                <span id="iceFinal" class="bonus-count">0</span>
-                            </div>
-                            <div class="bonus-item">
-                                <img src="assets/fire.png" alt="Огонь" class="bonus-icon-summary">
-                                <span id="fireFinal" class="bonus-count">0</span>
-                            </div>
-                            <div class="bonus-item">
-                                <img src="assets/orange.png" alt="Апельсин" class="bonus-icon-summary">
-                                <span id="orangeFinal" class="bonus-count">0</span>
-                            </div>
-                            <div class="bonus-item">
-                                <img src="assets/pineapple.png" alt="Ананас" class="bonus-icon-summary">
-                                <span id="pineappleFinal" class="bonus-count">0</span>
-                            </div>
-                            <div class="bonus-item">
-                                <img src="assets/coal.png" alt="Угли" class="bonus-icon-summary">
-                                <span id="coalFinal" class="bonus-count">0</span>
-                            </div>
-                        </div>
-                        <button id="restartBtn" class="btn-primary">🔄 ИГРАТЬ СНОВА</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Счётчики бонусов -->
-            <div class="bonus-panel">
                 <div class="bonus-tracker">
-                    <div class="bonus-counter" data-type="ice">
-                        <img src="assets/ice.png" alt="Лёд" class="bonus-icon">
-                        <div class="counter-info">
-                            <span class="bonus-name">ЛЁД</span>
-                            <span id="iceCount" class="bonus-count">0</span>
-                        </div>
+                    <div class="bonus-counter" data-bonus="ice">
+                        <img src="assets/ice.png" alt="Лёд">
+                        <span id="iceCount">0</span>
                     </div>
-                    <div class="bonus-counter" data-type="fire">
-                        <img src="assets/fire.png" alt="Огонь" class="bonus-icon">
-                        <div class="counter-info">
-                            <span class="bonus-name">ОГОНЬ</span>
-                            <span id="fireCount" class="bonus-count">0</span>
-                        </div>
+                    <div class="bonus-counter" data-bonus="fire">
+                        <img src="assets/fire.png" alt="Огонь">
+                        <span id="fireCount">0</span>
                     </div>
-                    <div class="bonus-counter" data-type="orange">
-                        <img src="assets/orange.png" alt="Апельсин" class="bonus-icon">
-                        <div class="counter-info">
-                            <span class="bonus-name">АПЕЛЬСИН</span>
-                            <span id="orangeCount" class="bonus-count">0</span>
-                        </div>
+                    <div class="bonus-counter" data-bonus="orange">
+                        <img src="assets/orange.png" alt="Апельсин">
+                        <span id="orangeCount">0</span>
                     </div>
-                    <div class="bonus-counter" data-type="pineapple">
-                        <img src="assets/pineapple.png" alt="Ананас" class="bonus-icon">
-                        <div class="counter-info">
-                            <span class="bonus-name">АНАНАС</span>
-                            <span id="pineappleCount" class="bonus-count">0</span>
-                        </div>
+                    <div class="bonus-counter" data-bonus="pineapple">
+                        <img src="assets/pineapple.png" alt="Ананас">
+                        <span id="pineappleCount">0</span>
                     </div>
-                    <div class="bonus-counter" data-type="coal">
-                        <img src="assets/coal.png" alt="Угли" class="bonus-icon">
-                        <div class="counter-info">
-                            <span class="bonus-name">УГЛИ</span>
-                            <span id="coalCount" class="bonus-count">0</span>
-                        </div>
+                    <div class="bonus-counter" data-bonus="coal">
+                        <img src="assets/coal.png" alt="Угли">
+                        <span id="coalCount">0</span>
                     </div>
+                </div>
+            </div>
+
+            <div class="game-area">
+                <canvas id="gameCanvas" width="800" height="600"></canvas>
+                
+                <div id="startScreen" class="overlay">
+                    <div class="overlay-content">
+                        <h2>ГОТОВ К БАРУ?</h2>
+                        <p>Тапай для прыжка</p>
+                        <button id="startBtn" class="btn">СТАРТ</button>
+                    </div>
+                </div>
+                
+                <div id="gameOverScreen" class="overlay" style="display: none;">
+                    <div class="overlay-content">
+                        <h2>КОНЕЦ ИГРЫ</h2>
+                        <div class="final-score">
+                            <span>Счёт: <strong id="finalScore">0</strong></span>
+                        </div>
+                        <button id="restartBtn" class="btn">ИГРАТЬ СНОВА</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-hint">
+                    <div class="key">TAP</div>
+                    <span>Прыжок</span>
+                </div>
+                <div class="control-hint">
+                    <div class="key">DOUBLE TAP</div>
+                    <span>Двойной прыжок</span>
                 </div>
             </div>
         </main>
-
-        <!-- Управление -->
-        <footer class="control-footer">
-            <div class="controls">
-                <div class="control-instruction">
-                    <div class="key-hint">TAP</div>
-                    <span>Прыжок</span>
-                </div>
-                <div class="control-instruction">
-                    <div class="key-hint">DOUBLE TAP</div>
-                    <span>Супер-прыжок</span>
-                </div>
-                <div class="control-instruction">
-                    <div class="key-hint">SPACE</div>
-                    <span>Начать игру</span>
-                </div>
-            </div>
-            <div class="footer-note">
-                <p>LUNA GAME STUDIO • Telegram Mini App</p>
-            </div>
-        </footer>
     </div>
 
     <script src="game.js"></script>
