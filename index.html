@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bar Runner — жди заказ с игрой!</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+<body>
+    <div class="container">
+        <div class="game-header">
+            <h1>🍸 BAR RUNNER</h1>
+            <p class="subtitle">Жди заказ — собирай бонусы!</p>
+        </div>
+        
+        <div class="game-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <div class="controls">
+                <div class="score-board">
+                    <div class="score-item">
+                        <span class="score-label">Счёт:</span>
+                        <span id="currentScore" class="score-value">0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Рекорд:</span>
+                        <span id="highScore" class="score-value">0</span>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <p>👉 <strong>ТАПНИ</strong> — чтобы прыгнуть</p>
+                    <p>⚠️ Избегай монстров!</p>
+                    <p>🎯 Собирай бонусы для очков</p>
+                </div>
+                
+                <button id="restartBtn" class="btn-restart">🔄 НАЧАТЬ ЗАНОВО</button>
+            </div>
+        </div>
+        
+        <div class="bonus-info">
+            <div class="bonus-item">
+                <img src="assets/ice.png" alt="Лёд" class="bonus-icon">
+                <span>+1 очко</span>
+            </div>
+            <div class="bonus-item">
+                <img src="assets/fire.png" alt="Огонь" class="bonus-icon">
+                <span>+2 очка</span>
+            </div>
+            <div class="bonus-item">
+                <img src="assets/pineapple.png" alt="Ананас" class="bonus-icon">
+                <span>+5 очков</span>
+            </div>
+            <div class="bonus-item">
+                <img src="assets/coal.png" alt="Угли" class="bonus-icon">
+                <span>x2 множитель</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Telegram Mini App | 8-bit Bar Edition</p>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
