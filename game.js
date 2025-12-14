@@ -1,23 +1,25 @@
 // =================== КОНСТАНТЫ И НАСТРОЙКИ ===================
 const CONFIG = {
-    CANVAS_WIDTH: 800,
-    CANVAS_HEIGHT: 500,
+    CANVAS_WIDTH: 850,
+    CANVAS_HEIGHT: 450,
     GRAVITY: 0.8,
-    JUMP_FORCE: -16,
+    JUMP_FORCE: -18,
     GAME_SPEED: 5,
-    HERO_WIDTH: 96,  // Увеличен в 1.5 раза
-    HERO_HEIGHT: 96,
-    OBSTACLE_WIDTH: 50,
-    OBSTACLE_HEIGHT: 50,
+    HERO_WIDTH: 128,     // Увеличен в 2 раза (было 64)
+    HERO_HEIGHT: 128,    // Увеличен в 2 раза
+    OBSTACLE_WIDTH: 60,
+    OBSTACLE_HEIGHT: 60,
     BONUS_SIZE: 50,
-    GROUND_HEIGHT: 50,
-    SPAWN_INTERVAL: 1500,
-    BONUS_SPAWN_CHANCE: 0.3,
-    MONSTER_SPAWN_CHANCE: 0.6,
-    BONUS_MAX_HEIGHT: 350,  // Максимальная высота бонусов
+    GROUND_HEIGHT: 60,
+    SPAWN_INTERVAL: 1400,
+    BONUS_SPAWN_CHANCE: 0.35,
+    MONSTER_SPAWN_CHANCE: 0.5,
+    BONUS_MAX_HEIGHT: 300,    // Доступная высота для бонусов
+    BONUS_MIN_HEIGHT: 200,    // Минимальная высота
     DOUBLE_JUMP_ENABLED: true,
-    DOUBLE_JUMP_FORCE: -14,
-    BONUS_MIN_HEIGHT: 180   // Минимальная высота бонусов
+    DOUBLE_JUMP_FORCE: -16,
+    SPEED_INCREASE_INTERVAL: 100, // Увеличиваем скорость каждые 100 очков
+    MAX_SPEED: 12
 };
 
 // =================== ПЕРЕМЕННЫЕ ИГРЫ ===================
@@ -25,7 +27,7 @@ let canvas, ctx;
 let gameRunning = false;
 let gameOver = false;
 let score = 0;
-let highScore = localStorage.getItem('barRunnerHighScore') || 0;
+let highScore = localStorage.getItem('lunaHighScore') || 0;
 let gameSpeed = CONFIG.GAME_SPEED;
 let multiplier = 1;
 let multiplierTimer = 0;
@@ -41,7 +43,7 @@ let bonusStats = {
 
 // =================== ОБЪЕКТЫ ИГРЫ ===================
 const hero = {
-    x: 150,
+    x: 180,
     y: CONFIG.CANVAS_HEIGHT - CONFIG.HERO_HEIGHT - CONFIG.GROUND_HEIGHT,
     width: CONFIG.HERO_WIDTH,
     height: CONFIG.HERO_HEIGHT,
@@ -56,28 +58,18 @@ const hero = {
 const background = {
     x1: 0,
     x2: CONFIG.CANVAS_WIDTH,
-    speed: gameSpeed * 0.5
+    speed: gameSpeed * 0.5,
+    color1: '#1e1e2e',
+    color2: '#252542'
 };
 
 let obstacles = [];
 let bonuses = [];
 let spawnTimer = 0;
+let particles = [];
 
 // =================== ИЗОБРАЖЕНИЯ ===================
-const images = {
-    hero: new Image(),
-    background: new Image(),
-    mon1: new Image(),
-    mon2: new Image(),
-    mon3: new Image(),
-    ice: new Image(),
-    fire: new Image(),
-    orange: new Image(),
-    pineapple: new Image(),
-    coal: new Image()
-};
-
-// Загрузка изображений
+const images = {};
 const imageSources = {
     hero: 'assets/hero.png',
     background: 'assets/background.png',
@@ -91,22 +83,34 @@ const imageSources = {
     coal: 'assets/coal.png'
 };
 
-// Загружаем все изображения
-let imagesLoaded = 0;
-const totalImages = Object.keys(imageSources).length;
-
-Object.keys(imageSources).forEach(key => {
-    images[key].src = imageSources[key];
-    images[key].onload = () => {
-        imagesLoaded++;
-        if (imagesLoaded === totalImages) {
-            console.log('Все изображения загружены!');
-        }
-    };
-    images[key].onerror = () => {
-        console.error(`Ошибка загрузки: ${imageSources[key]}`);
-    };
-});
+// =================== СИСТЕМА ЧАСТИЦ ===================
+class Particle {
+    constructor(x, y, color, velocityX, velocityY, size, life) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.velocityX = velocityX;
+        this.velocityY = velocityY;
+        this.size = size;
+        this.life = life;
+        this.maxLife = life;
+    }
+    
+    update() {
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+        this.life--;
+        this.velocityY += 0.1; // Гравитация
+    }
+    
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.life / this.maxLife;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+        ctx.restore();
+    }
+}
 
 // =================== ИНИЦИАЛИЗАЦИЯ ===================
 function init() {
@@ -116,12 +120,60 @@ function init() {
     // Установка высокого счета
     document.getElementById('highScore').textContent = highScore;
     updateBonusCounters();
+    updateMultiplierDisplay();
+    
+    // Загрузка изображений
+    loadImages();
     
     // Обработчики событий
+    setupEventListeners();
+    
+    // Начальный рендер
+    renderStartScreen();
+}
+
+function loadImages() {
+    let loadedCount = 0;
+    const totalImages = Object.keys(imageSources).length;
+    
+    Object.keys(imageSources).forEach(key => {
+        images[key] = new Image();
+        images[key].src = imageSources[key];
+        images[key].onload = () => {
+            loadedCount++;
+            if (loadedCount === totalImages) {
+                console.log('✅ Все изображения загружены');
+            }
+        };
+        images[key].onerror = () => {
+            console.error(`❌ Ошибка загрузки: ${imageSources[key]}`);
+            // Заглушка при ошибке
+            images[key] = createPlaceholder(50, 50, key === 'hero' ? '#ffd700' : '#666');
+        };
+    });
+}
+
+function createPlaceholder(width, height, color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = '#fff';
+    ctx.strokeRect(0, 0, width, height);
+    const img = new Image();
+    img.src = canvas.toDataURL();
+    return img;
+}
+
+function setupEventListeners() {
     canvas.addEventListener('click', handleJump);
+    
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Space' || e.code === 'ArrowUp') {
             handleJump();
+            e.preventDefault();
         }
         if (e.code === 'Enter' && !gameRunning) {
             startGame();
@@ -130,9 +182,6 @@ function init() {
     
     document.getElementById('startBtn').addEventListener('click', startGame);
     document.getElementById('restartBtn').addEventListener('click', restartGame);
-    
-    // Начальный рендер
-    renderStartScreen();
 }
 
 // =================== ИГРОВАЯ ЛОГИКА ===================
@@ -146,13 +195,15 @@ function startGame() {
     gameSpeed = CONFIG.GAME_SPEED;
     multiplier = 1;
     multiplierTimer = 0;
+    particles = [];
     
-    // Сброс статистики бонусов
+    // Сброс статистики
     bonusStats = { ice: 0, fire: 0, orange: 0, pineapple: 0, coal: 0 };
     updateBonusCounters();
     updateMultiplierDisplay();
+    updateFinalStats();
     
-    // Сброс позиций
+    // Сброс героя
     hero.y = CONFIG.CANVAS_HEIGHT - CONFIG.HERO_HEIGHT - CONFIG.GROUND_HEIGHT;
     hero.velocityY = 0;
     hero.isJumping = false;
@@ -167,7 +218,7 @@ function startGame() {
     // Обновить интерфейс
     document.getElementById('currentScore').textContent = score;
     
-    // Запустить игровой цикл
+    // Запуск игрового цикла
     requestAnimationFrame(gameLoop);
 }
 
@@ -186,7 +237,7 @@ function update(timestamp) {
         spawnObjects();
         spawnTimer = CONFIG.SPAWN_INTERVAL;
     } else {
-        spawnTimer -= 16; // примерно 60 FPS
+        spawnTimer -= 16;
     }
     
     // Обновить множитель
@@ -199,7 +250,7 @@ function update(timestamp) {
         }
     }
     
-    // Гравитация и движение героя
+    // Гравитация и движение
     hero.velocityY += CONFIG.GRAVITY;
     hero.y += hero.velocityY;
     
@@ -212,6 +263,11 @@ function update(timestamp) {
         hero.isOnGround = true;
         hero.jumpCount = 0;
         hero.canDoubleJump = false;
+        
+        // Эффект приземления
+        if (Math.abs(hero.velocityY) > 5) {
+            createLandingEffect();
+        }
     }
     
     // Движение фона
@@ -229,13 +285,11 @@ function update(timestamp) {
     for (let i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].x -= gameSpeed;
         
-        // Проверка столкновения
         if (checkCollision(hero, obstacles[i])) {
             endGame();
             return;
         }
         
-        // Удалить если за экраном
         if (obstacles[i].x < -CONFIG.OBSTACLE_WIDTH) {
             obstacles.splice(i, 1);
         }
@@ -245,21 +299,26 @@ function update(timestamp) {
     for (let i = bonuses.length - 1; i >= 0; i--) {
         bonuses[i].x -= gameSpeed;
         
-        // Проверка сбора
         if (checkCollision(hero, bonuses[i])) {
             collectBonus(bonuses[i]);
             bonuses.splice(i, 1);
         }
-        
-        // Удалить если за экраном
         else if (bonuses[i].x < -CONFIG.BONUS_SIZE) {
             bonuses.splice(i, 1);
         }
     }
     
-    // Увеличивать скорость со временем
-    if (score > 0 && score % 100 === 0) {
-        gameSpeed = CONFIG.GAME_SPEED + Math.floor(score / 100);
+    // Обновить частицы
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (particles[i].life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+    
+    // Увеличение скорости
+    if (score > 0 && score % CONFIG.SPEED_INCREASE_INTERVAL === 0) {
+        gameSpeed = Math.min(CONFIG.MAX_SPEED, CONFIG.GAME_SPEED + Math.floor(score / CONFIG.SPEED_INCREASE_INTERVAL));
         background.speed = gameSpeed * 0.5;
     }
 }
@@ -268,84 +327,140 @@ function render() {
     // Очистить канвас
     ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
     
-    // Нарисовать фон
-    ctx.drawImage(images.background, background.x1, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
-    ctx.drawImage(images.background, background.x2, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    // Градиентный фон
+    const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
+    gradient.addColorStop(0, background.color1);
+    gradient.addColorStop(1, background.color2);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
     
-    // Нарисовать землю
-    ctx.fillStyle = '#533483';
+    // Фоновое изображение
+    if (images.background && images.background.complete) {
+        ctx.drawImage(images.background, background.x1, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+        ctx.drawImage(images.background, background.x2, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    }
+    
+    // Земля
+    ctx.fillStyle = '#2a2a2a';
     ctx.fillRect(0, CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT, CONFIG.CANVAS_WIDTH, CONFIG.GROUND_HEIGHT);
-    ctx.fillStyle = '#6a4c93';
-    ctx.fillRect(0, CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT, CONFIG.CANVAS_WIDTH, 10);
     
-    // Нарисовать героя
-    ctx.drawImage(images.hero, hero.x, hero.y, hero.width, hero.height);
-    
-    // Нарисовать препятствия
-    obstacles.forEach(obstacle => {
-        ctx.drawImage(obstacle.img, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-    });
-    
-    // Нарисовать бонусы
-    bonuses.forEach(bonus => {
-        // Анимация пульсации для бонусов
-        const pulse = Math.sin(Date.now() * 0.005) * 3;
-        const size = CONFIG.BONUS_SIZE + pulse;
-        const offset = (CONFIG.BONUS_SIZE - size) / 2;
-        
+    // Тень под героем
+    if (!hero.isOnGround) {
         ctx.save();
-        ctx.globalAlpha = 0.9;
-        ctx.drawImage(bonus.img, 
-            bonus.x + offset, 
-            bonus.y + offset, 
-            size, 
-            size);
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.ellipse(
+            hero.x + hero.width/2,
+            CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT,
+            hero.width/3,
+            hero.height/8,
+            0, 0, Math.PI * 2
+        );
+        ctx.fill();
         ctx.restore();
+    }
+    
+    // Частицы
+    particles.forEach(particle => particle.draw(ctx));
+    
+    // Бонусы (с анимацией)
+    bonuses.forEach(bonus => {
+        if (bonus.img && bonus.img.complete) {
+            const pulse = Math.sin(Date.now() * 0.006) * 4;
+            const rotation = Math.sin(Date.now() * 0.003) * 0.1;
+            
+            ctx.save();
+            ctx.translate(bonus.x + CONFIG.BONUS_SIZE/2, bonus.y + CONFIG.BONUS_SIZE/2);
+            ctx.rotate(rotation);
+            ctx.drawImage(bonus.img, 
+                -CONFIG.BONUS_SIZE/2 - pulse/2, 
+                -CONFIG.BONUS_SIZE/2 - pulse/2, 
+                CONFIG.BONUS_SIZE + pulse, 
+                CONFIG.BONUS_SIZE + pulse
+            );
+            ctx.restore();
+        }
     });
+    
+    // Препятствия
+    obstacles.forEach(obstacle => {
+        if (obstacle.img && obstacle.img.complete) {
+            ctx.drawImage(obstacle.img, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        }
+    });
+    
+    // Герой
+    if (images.hero && images.hero.complete) {
+        ctx.drawImage(images.hero, hero.x, hero.y, hero.width, hero.height);
+    }
+    
+    // Эффект множителя
+    if (multiplier > 1) {
+        ctx.save();
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`×${multiplier}`, CONFIG.CANVAS_WIDTH - 20, 40);
+        ctx.restore();
+    }
 }
 
-// =================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===================
+// =================== ИГРОВЫЕ МЕХАНИКИ ===================
 function handleJump() {
     if (!gameRunning || gameOver) return;
     
     const now = Date.now();
     
     if (hero.isOnGround) {
-        // Первый прыжок с земли
+        // Первый прыжок
         hero.velocityY = CONFIG.JUMP_FORCE;
         hero.isJumping = true;
         hero.isOnGround = false;
         hero.jumpCount = 1;
         hero.canDoubleJump = true;
-        hero.lastJumpTime = now;
-        createJumpEffect('#00ffff');
+        createJumpEffect('#ffd700', 12);
     } 
     else if (CONFIG.DOUBLE_JUMP_ENABLED && hero.canDoubleJump && hero.jumpCount < 2) {
-        // Второй прыжок в воздухе
+        // Второй прыжок
         hero.velocityY = CONFIG.DOUBLE_JUMP_FORCE;
         hero.jumpCount = 2;
         hero.canDoubleJump = false;
-        createJumpEffect('#ff6b6b');
+        createJumpEffect('#ff6b6b', 15);
     }
 }
 
-function createJumpEffect(color) {
-    const particles = 6;
-    for (let i = 0; i < particles; i++) {
-        setTimeout(() => {
-            ctx.fillStyle = color;
-            ctx.fillRect(
-                hero.x + hero.width/2 - 2 + (Math.random() * 8 - 4),
-                hero.y + hero.height - 2,
-                4, 
-                4
-            );
-        }, i * 30);
+function createJumpEffect(color, count) {
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle(
+            hero.x + hero.width/2 + Math.random() * 20 - 10,
+            hero.y + hero.height,
+            color,
+            Math.random() * 4 - 2,
+            -Math.random() * 3 - 2,
+            Math.random() * 4 + 2,
+            Math.random() * 30 + 30
+        ));
+    }
+}
+
+function createLandingEffect() {
+    for (let i = 0; i < 8; i++) {
+        particles.push(new Particle(
+            hero.x + hero.width/2 + Math.random() * 40 - 20,
+            CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT,
+            '#666',
+            Math.random() * 6 - 3,
+            -Math.random() * 2 - 1,
+            Math.random() * 3 + 2,
+            Math.random() * 40 + 20
+        ));
     }
 }
 
 function spawnObjects() {
-    // Шанс спавна монстра
+    // Монстры
     if (Math.random() < CONFIG.MONSTER_SPAWN_CHANCE) {
         const monsterType = Math.floor(Math.random() * 3) + 1;
         let monsterImg;
@@ -356,18 +471,16 @@ function spawnObjects() {
             case 3: monsterImg = images.mon3; break;
         }
         
-        const obstacle = {
+        obstacles.push({
             img: monsterImg,
             x: CONFIG.CANVAS_WIDTH,
             y: CONFIG.CANVAS_HEIGHT - CONFIG.OBSTACLE_HEIGHT - CONFIG.GROUND_HEIGHT,
             width: CONFIG.OBSTACLE_WIDTH,
             height: CONFIG.OBSTACLE_HEIGHT
-        };
-        
-        obstacles.push(obstacle);
+        });
     }
     
-    // Шанс спавна бонуса (ограниченная высота!)
+    // Бонусы (только на доступной высоте!)
     if (Math.random() < CONFIG.BONUS_SPAWN_CHANCE) {
         const bonusTypes = [
             { img: images.ice, value: 1, type: 'ice' },
@@ -379,7 +492,7 @@ function spawnObjects() {
         
         const bonus = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
         
-        // ОГРАНИЧЕННАЯ ВЫСОТА БОНУСОВ!
+        // Высота в пределах досягаемости
         const minY = CONFIG.BONUS_MIN_HEIGHT;
         const maxY = CONFIG.BONUS_MAX_HEIGHT;
         const randomY = Math.random() * (maxY - minY) + minY;
@@ -397,22 +510,27 @@ function spawnObjects() {
 }
 
 function checkCollision(rect1, rect2) {
-    return rect1.x < rect2.x + rect2.width &&
-           rect1.x + rect1.width > rect2.x &&
-           rect1.y < rect2.y + rect2.height &&
-           rect1.y + rect1.height > rect2.y;
+    // Уменьшаем hitbox для более честной игры
+    const padding = 10;
+    return rect1.x + padding < rect2.x + rect2.width - padding &&
+           rect1.x + rect1.width - padding > rect2.x + padding &&
+           rect1.y + padding < rect2.y + rect2.height - padding &&
+           rect1.y + rect1.height - padding > rect2.y + padding;
 }
 
 function collectBonus(bonus) {
     let points = bonus.value;
     
-    // Обновляем статистику
+    // Статистика
     bonusStats[bonus.type]++;
     updateBonusCounters();
     
+    // Эффект сбора
+    createCollectEffect(bonus.x + CONFIG.BONUS_SIZE/2, bonus.y + CONFIG.BONUS_SIZE/2, bonus.type);
+    
     if (bonus.type === 'coal') {
         multiplier = 2;
-        multiplierTimer = 10000; // 10 секунд
+        multiplierTimer = 10000;
         points = 0;
         updateMultiplierDisplay();
     } else {
@@ -420,11 +538,65 @@ function collectBonus(bonus) {
         score += points;
     }
     
-    // Обновить интерфейс
+    // Обновить счёт
     document.getElementById('currentScore').textContent = score;
     
-    // Визуальный эффект сбора
-    createBonusEffect(bonus.x, bonus.y, points > 0 ? `+${points}` : 'x2!');
+    // Визуальный эффект
+    showScoreEffect(bonus.x + CONFIG.BONUS_SIZE/2, bonus.y, points > 0 ? `+${points}` : '×2');
+}
+
+function createCollectEffect(x, y, type) {
+    const colors = {
+        ice: '#00ffff',
+        fire: '#ff6b6b',
+        orange: '#ffa500',
+        pineapple: '#ffd700',
+        coal: '#666666'
+    };
+    
+    for (let i = 0; i < 15; i++) {
+        particles.push(new Particle(
+            x,
+            y,
+            colors[type] || '#ffffff',
+            Math.random() * 8 - 4,
+            Math.random() * 8 - 4,
+            Math.random() * 4 + 2,
+            Math.random() * 40 + 20
+        ));
+    }
+}
+
+function showScoreEffect(x, y, text) {
+    const effect = {
+        x: x,
+        y: y,
+        text: text,
+        alpha: 1,
+        velocityY: -1.5,
+        size: 24
+    };
+    
+    function animate() {
+        ctx.save();
+        ctx.globalAlpha = effect.alpha;
+        ctx.fillStyle = text === '×2' ? '#ffd700' : '#ffffff';
+        ctx.font = `bold ${effect.size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(effect.text, effect.x, effect.y);
+        ctx.restore();
+        
+        effect.y += effect.velocityY;
+        effect.alpha -= 0.02;
+        effect.size += 0.1;
+        
+        if (effect.alpha > 0) {
+            requestAnimationFrame(animate);
+        }
+    }
+    
+    animate();
 }
 
 function updateBonusCounters() {
@@ -435,16 +607,26 @@ function updateBonusCounters() {
     document.getElementById('coalCount').textContent = bonusStats.coal;
 }
 
+function updateFinalStats() {
+    document.getElementById('iceFinal').textContent = bonusStats.ice;
+    document.getElementById('fireFinal').textContent = bonusStats.fire;
+    document.getElementById('orangeFinal').textContent = bonusStats.orange;
+    document.getElementById('pineappleFinal').textContent = bonusStats.pineapple;
+    document.getElementById('coalFinal').textContent = bonusStats.coal;
+}
+
 function updateMultiplierDisplay() {
-    const multiplierText = document.getElementById('multiplierText');
+    const multiplierText = document.getElementById('multiplierValue');
     const multiplierFill = document.getElementById('multiplierFill');
     
-    multiplierText.textContent = `Множитель: x${multiplier}`;
+    multiplierText.textContent = `×${multiplier}`;
+    multiplierText.style.color = multiplier > 1 ? '#06d6a0' : '#ffd700';
     
     if (multiplier > 1) {
         const percent = (multiplierTimer / 10000) * 100;
         multiplierFill.style.width = `${percent}%`;
         
+        // Меняем цвет при заканчивающемся времени
         if (multiplierTimer < 3000) {
             multiplierFill.style.background = 'linear-gradient(to right, #ef476f, #ff6b6b)';
         } else {
@@ -456,53 +638,39 @@ function updateMultiplierDisplay() {
     }
 }
 
-function createBonusEffect(x, y, text) {
-    const effect = {
-        x: x + 25,
-        y: y,
-        text: text,
-        alpha: 1,
-        velocityY: -2,
-        size: 24
-    };
-    
-    function animate() {
-        ctx.save();
-        ctx.globalAlpha = effect.alpha;
-        ctx.fillStyle = effect.text === 'x2!' ? '#ffd166' : '#00ffff';
-        ctx.font = `bold ${effect.size}px Courier New`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(effect.text, effect.x, effect.y);
-        ctx.restore();
-        
-        effect.y += effect.velocityY;
-        effect.alpha -= 0.02;
-        effect.size += 0.2;
-        
-        if (effect.alpha > 0) {
-            requestAnimationFrame(animate);
-        }
-    }
-    
-    animate();
-}
-
 function endGame() {
     gameRunning = false;
     gameOver = true;
     
+    // Эффект проигрыша
+    for (let i = 0; i < 30; i++) {
+        particles.push(new Particle(
+            hero.x + hero.width/2,
+            hero.y + hero.height/2,
+            '#ff6b6b',
+            Math.random() * 10 - 5,
+            Math.random() * 10 - 5,
+            Math.random() * 5 + 3,
+            Math.random() * 60 + 30
+        ));
+    }
+    
     // Обновить рекорд
     if (score > highScore) {
         highScore = score;
-        localStorage.setItem('barRunnerHighScore', highScore);
+        localStorage.setItem('lunaHighScore', highScore);
         document.getElementById('highScore').textContent = highScore;
         document.getElementById('highScore').classList.add('new-record');
     }
     
-    // Показать экран проигрыша
+    // Показать итоги
     document.getElementById('finalScore').textContent = score;
-    document.getElementById('gameOverScreen').style.display = 'block';
+    updateFinalStats();
+    
+    // Показать экран проигрыша
+    setTimeout(() => {
+        document.getElementById('gameOverScreen').style.display = 'flex';
+    }, 800);
 }
 
 function restartGame() {
@@ -510,23 +678,27 @@ function restartGame() {
 }
 
 function renderStartScreen() {
-    // Просто очищаем и показываем стартовый экран
     ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
     
-    // Фон для стартового экрана
-    ctx.fillStyle = '#0f3460';
+    // Градиентный фон
+    const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
+    gradient.addColorStop(0, '#1a1a2e');
+    gradient.addColorStop(1, '#252542');
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
     
-    // Надпись
-    ctx.fillStyle = '#ffd166';
-    ctx.font = 'bold 36px Courier New';
+    // Заголовок
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 48px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('BAR RUNNER', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 50);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('LUNA BAR', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 50);
     
-    ctx.fillStyle = '#8ac6d1';
-    ctx.font = '20px Courier New';
-    ctx.fillText('Жди заказ — собирай бонусы!', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2);
+    // Подзаголовок
+    ctx.fillStyle = '#b0b0b0';
+    ctx.font = '20px sans-serif';
+    ctx.fillText('Жди заказ • Собирай бонусы', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 10);
 }
 
-// =================== ЗАПУСК ИГРЫ ===================
+// =================== ЗАПУСК ===================
 window.onload = init;

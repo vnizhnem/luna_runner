@@ -3,83 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bar Runner — жди заказ с игрой!</title>
+    <title>Luna Bar Runner</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
     <div class="container">
-        <div class="game-header">
-            <h1>🍸 BAR RUNNER</h1>
-            <p class="subtitle">Жди заказ — собирай бонусы!</p>
-        </div>
-        
-        <div class="top-panel">
-            <div class="score-container">
-                <div class="score-item">
-                    <span class="score-label">Счёт:</span>
-                    <span id="currentScore" class="score-value">0</span>
-                </div>
-                <div class="score-item">
-                    <span class="score-label">Рекорд:</span>
-                    <span id="highScore" class="score-value">0</span>
-                </div>
+        <!-- Главный заголовок -->
+        <header class="main-header">
+            <div class="logo">
+                <h1>LUNA BAR</h1>
+                <p class="tagline">Жди заказ • Собирай бонусы</p>
             </div>
-            
-            <div class="bonus-tracker">
-                <div class="bonus-counter">
-                    <img src="assets/ice.png" alt="Лёд" class="bonus-icon-small">
-                    <span id="iceCount" class="bonus-count">0</span>
-                </div>
-                <div class="bonus-counter">
-                    <img src="assets/fire.png" alt="Огонь" class="bonus-icon-small">
-                    <span id="fireCount" class="bonus-count">0</span>
-                </div>
-                <div class="bonus-counter">
-                    <img src="assets/orange.png" alt="Апельсин" class="bonus-icon-small">
-                    <span id="orangeCount" class="bonus-count">0</span>
-                </div>
-                <div class="bonus-counter">
-                    <img src="assets/pineapple.png" alt="Ананас" class="bonus-icon-small">
-                    <span id="pineappleCount" class="bonus-count">0</span>
-                </div>
-                <div class="bonus-counter">
-                    <img src="assets/coal.png" alt="Угли" class="bonus-icon-small">
-                    <span id="coalCount" class="bonus-count">0</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="game-container">
-            <canvas id="gameCanvas" width="800" height="500"></canvas>
-            
-            <div id="startScreen" class="start-screen">
-                <h2>ГОТОВ К ЗАКАЗУ?</h2>
-                <p>Тапай, чтобы прыгать<br>Двойной тап — двойной прыжок!</p>
-                <button id="startBtn" class="btn-start">▶ НАЧАТЬ ИГРУ</button>
-            </div>
-            
-            <div id="gameOverScreen" class="game-over-screen" style="display: none;">
-                <h2>ЗАКАЗ ПРОПАЛ! 😅</h2>
-                <p>Твой счёт: <span id="finalScore">0</span></p>
-                <button id="restartBtn" class="btn-restart">🔄 ЕЩЁ РАЗОК</button>
-            </div>
-            
-            <div class="control-panel">
-                <div class="instructions">
-                    <p>👉 <strong>ТАП</strong> — прыжок</p>
-                    <p>👉 <strong>ДВА ТАПА</strong> — двойной прыжок</p>
-                </div>
-                
-                <div class="multiplier-display">
-                    <span id="multiplierText">Множитель: x1</span>
-                    <div id="multiplierBar" class="multiplier-bar">
-                        <div id="multiplierFill" class="multiplier-fill"></div>
+        </header>
+
+        <!-- Игровая область -->
+        <main class="game-area">
+            <!-- Панель статистики -->
+            <div class="stats-panel">
+                <div class="score-display">
+                    <div class="stat-box">
+                        <span class="stat-label">СЧЁТ</span>
+                        <span id="currentScore" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">РЕКОРД</span>
+                        <span id="highScore" class="stat-value">0</span>
+                    </div>
+                    <div class="multiplier-display">
+                        <span class="multiplier-label">МНОЖИТЕЛЬ</span>
+                        <span id="multiplierValue" class="multiplier-value">×1</span>
+                        <div id="multiplierBar" class="multiplier-bar">
+                            <div id="multiplierFill" class="multiplier-fill"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Игровой канвас -->
+            <div class="canvas-container">
+                <canvas id="gameCanvas" width="850" height="450"></canvas>
+                
+                <!-- Экран старта -->
+                <div id="startScreen" class="screen-overlay start-screen">
+                    <div class="overlay-content">
+                        <h2>ГОТОВ К ЗАКАЗУ?</h2>
+                        <p>Тапай для прыжка<br>Двойной тап — супер-прыжок</p>
+                        <button id="startBtn" class="btn-primary">▶ СТАРТ</button>
+                    </div>
+                </div>
+                
+                <!-- Экран завершения -->
+                <div id="gameOverScreen" class="screen-overlay game-over-screen" style="display: none;">
+                    <div class="overlay-content">
+                        <h2>ВРЕМЯ ВЫШЛО!</h2>
+                        <div class="final-score">
+                            <span class="score-label">ТВОЙ СЧЁТ:</span>
+                            <span id="finalScore" class="score-value">0</span>
+                        </div>
+                        <div class="bonus-summary">
+                            <div class="bonus-item">
+                                <img src="assets/ice.png" alt="Лёд" class="bonus-icon-summary">
+                                <span id="iceFinal" class="bonus-count">0</span>
+                            </div>
+                            <div class="bonus-item">
+                                <img src="assets/fire.png" alt="Огонь" class="bonus-icon-summary">
+                                <span id="fireFinal" class="bonus-count">0</span>
+                            </div>
+                            <div class="bonus-item">
+                                <img src="assets/orange.png" alt="Апельсин" class="bonus-icon-summary">
+                                <span id="orangeFinal" class="bonus-count">0</span>
+                            </div>
+                            <div class="bonus-item">
+                                <img src="assets/pineapple.png" alt="Ананас" class="bonus-icon-summary">
+                                <span id="pineappleFinal" class="bonus-count">0</span>
+                            </div>
+                            <div class="bonus-item">
+                                <img src="assets/coal.png" alt="Угли" class="bonus-icon-summary">
+                                <span id="coalFinal" class="bonus-count">0</span>
+                            </div>
+                        </div>
+                        <button id="restartBtn" class="btn-primary">🔄 ИГРАТЬ СНОВА</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Счётчики бонусов -->
+            <div class="bonus-panel">
+                <div class="bonus-tracker">
+                    <div class="bonus-counter" data-type="ice">
+                        <img src="assets/ice.png" alt="Лёд" class="bonus-icon">
+                        <div class="counter-info">
+                            <span class="bonus-name">ЛЁД</span>
+                            <span id="iceCount" class="bonus-count">0</span>
+                        </div>
+                    </div>
+                    <div class="bonus-counter" data-type="fire">
+                        <img src="assets/fire.png" alt="Огонь" class="bonus-icon">
+                        <div class="counter-info">
+                            <span class="bonus-name">ОГОНЬ</span>
+                            <span id="fireCount" class="bonus-count">0</span>
+                        </div>
+                    </div>
+                    <div class="bonus-counter" data-type="orange">
+                        <img src="assets/orange.png" alt="Апельсин" class="bonus-icon">
+                        <div class="counter-info">
+                            <span class="bonus-name">АПЕЛЬСИН</span>
+                            <span id="orangeCount" class="bonus-count">0</span>
+                        </div>
+                    </div>
+                    <div class="bonus-counter" data-type="pineapple">
+                        <img src="assets/pineapple.png" alt="Ананас" class="bonus-icon">
+                        <div class="counter-info">
+                            <span class="bonus-name">АНАНАС</span>
+                            <span id="pineappleCount" class="bonus-count">0</span>
+                        </div>
+                    </div>
+                    <div class="bonus-counter" data-type="coal">
+                        <img src="assets/coal.png" alt="Угли" class="bonus-icon">
+                        <div class="counter-info">
+                            <span class="bonus-name">УГЛИ</span>
+                            <span id="coalCount" class="bonus-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Управление -->
+        <footer class="control-footer">
+            <div class="controls">
+                <div class="control-instruction">
+                    <div class="key-hint">TAP</div>
+                    <span>Прыжок</span>
+                </div>
+                <div class="control-instruction">
+                    <div class="key-hint">DOUBLE TAP</div>
+                    <span>Супер-прыжок</span>
+                </div>
+                <div class="control-instruction">
+                    <div class="key-hint">SPACE</div>
+                    <span>Начать игру</span>
+                </div>
+            </div>
+            <div class="footer-note">
+                <p>LUNA GAME STUDIO • Telegram Mini App</p>
+            </div>
+        </footer>
     </div>
-    
+
     <script src="game.js"></script>
 </body>
 </html>
