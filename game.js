@@ -1,24 +1,23 @@
-// =================== НАСТРОЙКИ ИГРЫ ===================
+// =================== НАСТРОЙКИ ===================
 const CONFIG = {
-    CANVAS_WIDTH: 800,
-    CANVAS_HEIGHT: 600,       // Высота твоего фона
+    BASE_SPEED: 10,           // Удвоили стартовую скорость (было 5)
     GRAVITY: 0.8,
     JUMP_FORCE: -18,
-    BASE_SPEED: 5,
-    HERO_WIDTH: 128,          // Увеличенный герой
+    HERO_WIDTH: 128,
     HERO_HEIGHT: 128,
-    MONSTER_WIDTH: 60,        // Только mon3.png
+    MONSTER_WIDTH: 60,
     MONSTER_HEIGHT: 60,
-    BONUS_SIZE: 50,
-    SPAWN_INTERVAL: 1500,
+    BONUS_SIZE: 40,           // Чуть меньше для мобильных
+    SPAWN_INTERVAL: 1200,     // Быстрее спавн
     BONUS_SPAWN_CHANCE: 0.4,
     MONSTER_SPAWN_CHANCE: 0.6,
-    BONUS_MAX_HEIGHT: 450,    // Доступная высота для прыжка
+    BONUS_MAX_HEIGHT: 450,
     BONUS_MIN_HEIGHT: 250,
     DOUBLE_JUMP_ENABLED: true,
     DOUBLE_JUMP_FORCE: -16,
-    SPEED_INCREASE_PER_5_BONUSES: 0.5, // +0.5 скорости за каждые 5 бонусов
-    MAX_SPEED: 10
+    SPEED_INCREASE_PER_5_BONUSES: 2.0, // +2.0 скорости за каждые 5 бонусов
+    MAX_SPEED: 20,
+    CANVAS_RATIO: 4/3         // Соотношение для адаптивности
 };
 
 // =================== ПЕРЕМЕННЫЕ ===================
@@ -29,21 +28,16 @@ let score = 0;
 let highScore = localStorage.getItem('lunaHighScore') || 0;
 let gameSpeed = CONFIG.BASE_SPEED;
 let totalBonusesCollected = 0;
-let speedLevel = 1.0;
+let speedLevel = 2.0; // Начинаем с x2.0
 
-// Статистика бонусов
 let bonusStats = {
-    ice: 0,
-    fire: 0,
-    orange: 0,
-    pineapple: 0,
-    coal: 0
+    ice: 0, fire: 0, orange: 0, pineapple: 0, coal: 0
 };
 
 // =================== ОБЪЕКТЫ ===================
 const hero = {
     x: 150,
-    y: CONFIG.CANVAS_HEIGHT - CONFIG.HERO_HEIGHT - 50, // 50px от нижнего края
+    y: 0, // Будет установлено после загрузки
     width: CONFIG.HERO_WIDTH,
     height: CONFIG.HERO_HEIGHT,
     velocityY: 0,
@@ -55,7 +49,7 @@ const hero = {
 
 const background = {
     x1: 0,
-    x2: CONFIG.CANVAS_WIDTH,
+    x2: 0, // Будет установлено после загрузки
     speed: CONFIG.BASE_SPEED * 0.5
 };
 
@@ -63,74 +57,29 @@ let monsters = [];
 let bonuses = [];
 let spawnTimer = 0;
 
-// =================== ЗАГРУЗКА ИЗОБРАЖЕНИЙ ===================
-const images = {};
-
-function loadImages() {
-    return new Promise((resolve) => {
-        const imageList = [
-            { key: 'hero', src: 'assets/hero.png' },
-            { key: 'background', src: 'assets/background.png' },
-            { key: 'monster', src: 'assets/mon3.png' }, // Только один тип монстра
-            { key: 'ice', src: 'assets/ice.png' },
-            { key: 'fire', src: 'assets/fire.png' },
-            { key: 'orange', src: 'assets/orange.png' },
-            { key: 'pineapple', src: 'assets/pineapple.png' },
-            { key: 'coal', src: 'assets/coal.png' }
-        ];
-        
-        let loaded = 0;
-        
-        imageList.forEach(item => {
-            images[item.key] = new Image();
-            images[item.key].src = item.src;
-            images[item.key].onload = () => {
-                loaded++;
-                if (loaded === imageList.length) {
-                    console.log('✅ Все изображения загружены');
-                    resolve();
-                }
-            };
-            images[item.key].onerror = () => {
-                console.error(`❌ Ошибка загрузки: ${item.src}`);
-                // Создаём заглушку
-                createPlaceholder(item.key);
-                loaded++;
-                if (loaded === imageList.length) resolve();
-            };
-        });
-    });
+// =================== РАЗМЕРЫ КАНВАСА ===================
+function getCanvasSize() {
+    const gameArea = document.querySelector('.game-area');
+    const width = gameArea.clientWidth;
+    const height = Math.min(width * CONFIG.CANVAS_RATIO, window.innerHeight * 0.6);
+    
+    return { width, height };
 }
 
-function createPlaceholder(key) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+    const size = getCanvasSize();
     
-    if (key === 'hero') {
-        canvas.width = CONFIG.HERO_WIDTH;
-        canvas.height = CONFIG.HERO_HEIGHT;
-        ctx.fillStyle = '#ffd700';
-        ctx.fillRect(0, 0, CONFIG.HERO_WIDTH, CONFIG.HERO_HEIGHT);
-        ctx.fillStyle = '#000';
-        ctx.font = '20px Arial';
-        ctx.fillText('HERO', 10, 40);
-    } else if (key === 'monster') {
-        canvas.width = CONFIG.MONSTER_WIDTH;
-        canvas.height = CONFIG.MONSTER_HEIGHT;
-        ctx.fillStyle = '#ff6b6b';
-        ctx.fillRect(0, 0, CONFIG.MONSTER_WIDTH, CONFIG.MONSTER_HEIGHT);
-        ctx.fillStyle = '#fff';
-        ctx.font = '12px Arial';
-        ctx.fillText('MON', 10, 25);
-    } else {
-        canvas.width = CONFIG.BONUS_SIZE;
-        canvas.height = CONFIG.BONUS_SIZE;
-        ctx.fillStyle = '#00ff88';
-        ctx.fillRect(0, 0, CONFIG.BONUS_SIZE, CONFIG.BONUS_SIZE);
+    canvas.width = size.width;
+    canvas.height = size.height;
+    
+    // Пересчитываем позиции
+    hero.y = size.height - CONFIG.HERO_HEIGHT - 30;
+    background.x2 = size.width;
+    
+    // Перерисовываем если игра не запущена
+    if (!gameRunning) {
+        renderStartScreen();
     }
-    
-    images[key] = new Image();
-    images[key].src = canvas.toDataURL();
 }
 
 // =================== ИНИЦИАЛИЗАЦИЯ ===================
@@ -138,21 +87,34 @@ async function init() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     
-    // Загрузка изображений
-    await loadImages();
+    // Настройка размеров
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(resizeCanvas, 100);
+    });
     
-    // Установка рекорда
+    // Рекорд и скорость
     document.getElementById('highScore').textContent = highScore;
     document.getElementById('speedLevel').textContent = `x${speedLevel.toFixed(1)}`;
     updateBonusCounters();
     
-    // Обработчики событий
+    // Обработчики
+    setupEventListeners();
+    
+    // Стартовый экран
+    renderStartScreen();
+}
+
+function setupEventListeners() {
+    // Тап на весь канвас
     canvas.addEventListener('click', handleJump);
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         handleJump();
-    });
+    }, { passive: false });
     
+    // Пробел и Enter
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Space' || e.code === 'ArrowUp') {
             handleJump();
@@ -163,14 +125,12 @@ async function init() {
         }
     });
     
+    // Кнопки
     document.getElementById('startBtn').addEventListener('click', startGame);
     document.getElementById('restartBtn').addEventListener('click', restartGame);
-    
-    // Начальный экран
-    renderStartScreen();
 }
 
-// =================== ИГРОВАЯ ЛОГИКА ===================
+// =================== ИГРОВОЙ ЦИКЛ ===================
 function startGame() {
     document.getElementById('startScreen').style.display = 'none';
     document.getElementById('gameOverScreen').style.display = 'none';
@@ -179,7 +139,7 @@ function startGame() {
     gameOver = false;
     score = 0;
     gameSpeed = CONFIG.BASE_SPEED;
-    speedLevel = 1.0;
+    speedLevel = 2.0;
     totalBonusesCollected = 0;
     
     // Сброс статистики
@@ -187,8 +147,8 @@ function startGame() {
     updateBonusCounters();
     updateSpeedDisplay();
     
-    // Сброс позиций
-    hero.y = CONFIG.CANVAS_HEIGHT - CONFIG.HERO_HEIGHT - 50;
+    // Сброс героя
+    hero.y = canvas.height - CONFIG.HERO_HEIGHT - 30;
     hero.velocityY = 0;
     hero.isJumping = false;
     hero.isOnGround = true;
@@ -199,10 +159,10 @@ function startGame() {
     bonuses = [];
     spawnTimer = 0;
     
-    // Обновить интерфейс
+    // Обновить UI
     document.getElementById('currentScore').textContent = score;
     
-    // Игровой цикл
+    // Запуск
     requestAnimationFrame(gameLoop);
 }
 
@@ -216,20 +176,20 @@ function gameLoop() {
 }
 
 function update() {
-    // Спавн объектов
+    // Спавн
     if (spawnTimer <= 0) {
         spawnObjects();
         spawnTimer = CONFIG.SPAWN_INTERVAL;
     } else {
-        spawnTimer -= 1000 / 60; // 60 FPS
+        spawnTimer -= 1000 / 60;
     }
     
     // Физика героя
     hero.velocityY += CONFIG.GRAVITY;
     hero.y += hero.velocityY;
     
-    // Проверка нижней границы
-    const groundLevel = CONFIG.CANVAS_HEIGHT - CONFIG.HERO_HEIGHT - 50;
+    // Земля
+    const groundLevel = canvas.height - CONFIG.HERO_HEIGHT - 30;
     if (hero.y > groundLevel) {
         hero.y = groundLevel;
         hero.velocityY = 0;
@@ -239,43 +199,39 @@ function update() {
         hero.canDoubleJump = false;
     }
     
-    // Движение фона
+    // Фон
     background.x1 -= background.speed;
     background.x2 -= background.speed;
     
-    if (background.x1 <= -CONFIG.CANVAS_WIDTH) {
-        background.x1 = CONFIG.CANVAS_WIDTH;
+    if (background.x1 <= -canvas.width) {
+        background.x1 = canvas.width;
     }
-    if (background.x2 <= -CONFIG.CANVAS_WIDTH) {
-        background.x2 = CONFIG.CANVAS_WIDTH;
+    if (background.x2 <= -canvas.width) {
+        background.x2 = canvas.width;
     }
     
-    // Обновление монстров
+    // Монстры
     for (let i = monsters.length - 1; i >= 0; i--) {
         monsters[i].x -= gameSpeed;
         
-        // Столкновение
         if (checkCollision(hero, monsters[i])) {
             endGame();
             return;
         }
         
-        // Удаление за экраном
         if (monsters[i].x < -CONFIG.MONSTER_WIDTH) {
             monsters.splice(i, 1);
         }
     }
     
-    // Обновление бонусов
+    // Бонусы
     for (let i = bonuses.length - 1; i >= 0; i--) {
         bonuses[i].x -= gameSpeed;
         
-        // Сбор бонуса
         if (checkCollision(hero, bonuses[i])) {
             collectBonus(bonuses[i]);
             bonuses.splice(i, 1);
         }
-        // Удаление за экраном
         else if (bonuses[i].x < -CONFIG.BONUS_SIZE) {
             bonuses.splice(i, 1);
         }
@@ -284,66 +240,80 @@ function update() {
 
 function render() {
     // Очистка
-    ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Фон (растягиваем на весь экран)
-    if (images.background && images.background.complete) {
-        // Рисуем два изображения для бесконечного скролла
-        ctx.drawImage(images.background, 
-            background.x1, 0, 
-            CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
-        ctx.drawImage(images.background, 
-            background.x2, 0, 
-            CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
-    } else {
-        // Запасной фон
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
-    }
+    // Запасной фон
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Бонусы (с анимацией)
+    // Бонусы
     bonuses.forEach(bonus => {
-        if (images[bonus.type] && images[bonus.type].complete) {
-            // Пульсация
-            const pulse = Math.sin(Date.now() * 0.005) * 3;
-            const size = CONFIG.BONUS_SIZE + pulse;
-            const offset = (CONFIG.BONUS_SIZE - size) / 2;
-            
-            ctx.save();
-            ctx.globalAlpha = 0.9;
-            ctx.drawImage(images[bonus.type], 
-                bonus.x + offset, 
-                bonus.y + offset, 
-                size, size);
-            ctx.restore();
-        }
+        const pulse = Math.sin(Date.now() * 0.005) * 3;
+        const size = CONFIG.BONUS_SIZE + pulse;
+        const offset = (CONFIG.BONUS_SIZE - size) / 2;
+        
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        
+        // Рисуем кружок под бонусом
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.beginPath();
+        ctx.arc(
+            bonus.x + CONFIG.BONUS_SIZE/2,
+            bonus.y + CONFIG.BONUS_SIZE/2,
+            size/2,
+            0, Math.PI * 2
+        );
+        ctx.fill();
+        
+        // Текст названия бонуса
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+            getBonusName(bonus.type),
+            bonus.x + CONFIG.BONUS_SIZE/2,
+            bonus.y - 5
+        );
+        
+        ctx.restore();
     });
     
     // Монстры
     monsters.forEach(monster => {
-        if (images.monster && images.monster.complete) {
-            ctx.drawImage(images.monster, 
-                monster.x, monster.y, 
-                monster.width, monster.height);
-        }
+        ctx.save();
+        // Тень под монстром
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(
+            monster.x + 5,
+            monster.y + monster.height - 5,
+            monster.width - 10,
+            10
+        );
+        ctx.restore();
     });
     
-    // Герой
-    if (images.hero && images.hero.complete) {
-        ctx.drawImage(images.hero, 
-            hero.x, hero.y, 
-            hero.width, hero.height);
-    }
+    // Герой с тенью
+    ctx.save();
+    // Тень
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(
+        hero.x + hero.width/2,
+        hero.y + hero.height + 5,
+        hero.width/3 * (1 + Math.abs(hero.velocityY * 0.1)),
+        hero.height/8,
+        0, 0, Math.PI * 2
+    );
+    ctx.fill();
     
-    // Индикатор скорости
-    if (speedLevel > 1.0) {
-        ctx.save();
-        ctx.fillStyle = '#00ff88';
-        ctx.font = 'bold 20px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText(`Скорость: x${speedLevel.toFixed(1)}`, CONFIG.CANVAS_WIDTH - 20, 30);
-        ctx.restore();
+    // Контур героя при прыжке
+    if (hero.isJumping) {
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hero.x, hero.y, hero.width, hero.height);
     }
+    ctx.restore();
 }
 
 // =================== ИГРОВЫЕ ФУНКЦИИ ===================
@@ -370,8 +340,8 @@ function spawnObjects() {
     // Монстры
     if (Math.random() < CONFIG.MONSTER_SPAWN_CHANCE) {
         monsters.push({
-            x: CONFIG.CANVAS_WIDTH,
-            y: CONFIG.CANVAS_HEIGHT - CONFIG.MONSTER_HEIGHT - 50,
+            x: canvas.width,
+            y: canvas.height - CONFIG.MONSTER_HEIGHT - 30,
             width: CONFIG.MONSTER_WIDTH,
             height: CONFIG.MONSTER_HEIGHT
         });
@@ -382,13 +352,12 @@ function spawnObjects() {
         const bonusTypes = ['ice', 'fire', 'orange', 'pineapple', 'coal'];
         const type = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
         
-        // Высота в пределах досягаемости
         const minY = CONFIG.BONUS_MIN_HEIGHT;
-        const maxY = CONFIG.BONUS_MAX_HEIGHT;
+        const maxY = Math.min(CONFIG.BONUS_MAX_HEIGHT, canvas.height - 100);
         const y = Math.random() * (maxY - minY) + minY;
         
         bonuses.push({
-            x: CONFIG.CANVAS_WIDTH,
+            x: canvas.width,
             y: y,
             width: CONFIG.BONUS_SIZE,
             height: CONFIG.BONUS_SIZE,
@@ -399,14 +368,19 @@ function spawnObjects() {
 }
 
 function getBonusValue(type) {
-    switch(type) {
-        case 'ice': return 1;
-        case 'fire': return 2;
-        case 'orange': return 3;
-        case 'pineapple': return 5;
-        case 'coal': return 0;
-        default: return 1;
-    }
+    const values = { ice: 1, fire: 2, orange: 3, pineapple: 5, coal: 0 };
+    return values[type] || 1;
+}
+
+function getBonusName(type) {
+    const names = { 
+        ice: 'ЛЁД', 
+        fire: 'ОГОНЬ', 
+        orange: 'АПЕЛ.', 
+        pineapple: 'АНАН.', 
+        coal: 'УГЛИ' 
+    };
+    return names[type] || '???';
 }
 
 function checkCollision(rect1, rect2) {
@@ -417,29 +391,25 @@ function checkCollision(rect1, rect2) {
 }
 
 function collectBonus(bonus) {
-    // Увеличиваем счётчик бонусов
     totalBonusesCollected++;
-    
-    // Обновляем статистику
     bonusStats[bonus.type]++;
     updateBonusCounters();
     
-    // Увеличиваем скорость каждые 5 бонусов
+    // Увеличение скорости каждые 5 бонусов
     if (totalBonusesCollected % 5 === 0) {
         increaseSpeed();
     }
     
-    // Добавляем очки
+    // Очки
     if (bonus.type !== 'coal') {
         const points = bonus.value;
         score += points;
         document.getElementById('currentScore').textContent = score;
         
         // Эффект сбора
-        showBonusEffect(bonus.x, bonus.y, `+${points}`);
+        showBonusEffect(bonus.x + bonus.width/2, bonus.y, `+${points}`);
     } else {
-        // Угли дают х2 на 10 секунд (если хочешь)
-        showBonusEffect(bonus.x, bonus.y, 'x2');
+        showBonusEffect(bonus.x + bonus.width/2, bonus.y, 'x2');
     }
 }
 
@@ -448,16 +418,16 @@ function increaseSpeed() {
     background.speed = gameSpeed * 0.5;
     
     // Обновляем уровень скорости
-    speedLevel = gameSpeed / CONFIG.BASE_SPEED;
+    speedLevel = gameSpeed / CONFIG.BASE_SPEED * 2;
     updateSpeedDisplay();
     
-    // Эффект ускорения
+    // Визуальный эффект
     showSpeedEffect();
 }
 
 function showBonusEffect(x, y, text) {
     const effect = {
-        x: x + CONFIG.BONUS_SIZE/2,
+        x: x,
         y: y,
         text: text,
         alpha: 1,
@@ -488,34 +458,11 @@ function showBonusEffect(x, y, text) {
 }
 
 function showSpeedEffect() {
-    const effect = {
-        x: CONFIG.CANVAS_WIDTH / 2,
-        y: CONFIG.CANVAS_HEIGHT / 2,
-        text: `СКОРОСТЬ +!`,
-        alpha: 1,
-        size: 40
-    };
-    
-    function animate() {
-        ctx.save();
-        ctx.globalAlpha = effect.alpha;
-        ctx.fillStyle = '#00ff88';
-        ctx.font = `bold ${effect.size}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(effect.text, effect.x, effect.y);
-        ctx.restore();
-        
-        effect.alpha -= 0.02;
-        effect.size += 0.5;
-        effect.y -= 0.5;
-        
-        if (effect.alpha > 0) {
-            requestAnimationFrame(animate);
-        }
-    }
-    
-    animate();
+    const speedElement = document.getElementById('speedLevel');
+    speedElement.classList.add('speed-up');
+    setTimeout(() => {
+        speedElement.classList.remove('speed-up');
+    }, 600);
 }
 
 function updateBonusCounters() {
@@ -534,14 +481,15 @@ function endGame() {
     gameRunning = false;
     gameOver = true;
     
-    // Обновление рекорда
+    // Новый рекорд
     if (score > highScore) {
         highScore = score;
         localStorage.setItem('lunaHighScore', highScore);
         document.getElementById('highScore').textContent = highScore;
+        document.getElementById('highScore').classList.add('new-record');
     }
     
-    // Показ экрана завершения
+    // Экран завершения
     document.getElementById('finalScore').textContent = score;
     setTimeout(() => {
         document.getElementById('gameOverScreen').style.display = 'flex';
@@ -553,23 +501,26 @@ function restartGame() {
 }
 
 function renderStartScreen() {
-    ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Фон
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    // Градиентный фон
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#1a1a2e');
+    gradient.addColorStop(1, '#252542');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Заголовок
     ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 48px sans-serif';
+    ctx.font = `bold ${Math.min(48, canvas.width / 10)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('LUNA BAR', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 30);
+    ctx.fillText('LUNA BAR', canvas.width / 2, canvas.height / 2 - 30);
     
     // Подсказка
     ctx.fillStyle = '#888';
-    ctx.font = '20px sans-serif';
-    ctx.fillText('Нажми СТАРТ чтобы начать', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 30);
+    ctx.font = `${Math.min(20, canvas.width / 20)}px sans-serif`;
+    ctx.fillText('Нажми СТАРТ', canvas.width / 2, canvas.height / 2 + 20);
 }
 
 // =================== ЗАПУСК ===================
