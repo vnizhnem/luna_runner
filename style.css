@@ -12,207 +12,379 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 15px;
+    overflow-x: hidden;
 }
 
 .container {
-    max-width: 900px;
+    max-width: 850px;
     width: 100%;
-    background: rgba(25, 25, 35, 0.9);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    border: 2px solid #4a4a6d;
+    display: flex;
+    flex-direction: column;
 }
 
+/* ===== ШАПКА ===== */
 .game-header {
     text-align: center;
-    margin-bottom: 25px;
-    padding-bottom: 20px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
     border-bottom: 3px solid #ff6b6b;
 }
 
 .game-header h1 {
-    font-size: 2.8rem;
+    font-size: 2.5rem;
     color: #ffd166;
     text-shadow: 3px 3px 0 #ef476f;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     letter-spacing: 2px;
 }
 
 .subtitle {
     color: #8ac6d1;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: bold;
 }
 
-.game-container {
+/* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+.top-panel {
     display: flex;
-    flex-direction: column;
-    gap: 25px;
+    justify-content: space-between;
     align-items: center;
-}
-
-#gameCanvas {
-    background: #0f3460;
+    background: rgba(83, 52, 131, 0.8);
     border-radius: 12px;
-    border: 4px solid #533483;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
-    display: block;
+    padding: 12px 20px;
+    border: 3px solid #6a4c93;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-.controls {
-    width: 100%;
-    background: rgba(83, 52, 131, 0.3);
-    border-radius: 15px;
-    padding: 20px;
-    border: 2px solid #6a4c93;
-}
-
-.score-board {
+.score-container {
     display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 15px;
-    border-radius: 10px;
+    gap: 25px;
 }
 
 .score-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .score-label {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #8ac6d1;
+    font-weight: bold;
     margin-bottom: 5px;
 }
 
 .score-value {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     font-weight: bold;
     color: #ffd166;
     text-shadow: 2px 2px 0 #000;
+    min-width: 70px;
 }
 
-.instructions {
-    background: rgba(239, 71, 111, 0.2);
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    border-left: 4px solid #ef476f;
+/* ===== ТРЕКЕР БОНУСОВ ===== */
+.bonus-tracker {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 2px solid #ffd166;
 }
 
-.instructions p {
-    margin: 8px 0;
-    font-size: 1.1rem;
-    color: #e9ecef;
+.bonus-counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 45px;
 }
 
-.btn-restart {
-    width: 100%;
-    padding: 18px;
-    font-size: 1.4rem;
+.bonus-icon-small {
+    width: 28px;
+    height: 28px;
+    image-rendering: pixelated;
+    filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));
+}
+
+.bonus-count {
+    font-size: 1rem;
+    color: #fff;
     font-weight: bold;
-    background: linear-gradient(to right, #ef476f, #ff6b6b);
+    background: rgba(239, 71, 111, 0.8);
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 24px;
+    text-align: center;
+}
+
+/* ===== КОНТЕЙНЕР ИГРЫ ===== */
+.game-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+/* ===== КАНВАС ===== */
+#gameCanvas {
+    background: #0f3460;
+    border-radius: 12px;
+    border: 4px solid #533483;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+    display: block;
+    z-index: 1;
+}
+
+/* ===== ЭКРАН СТАРТА ===== */
+.start-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(25, 25, 35, 0.95);
+    border: 4px solid #ffd166;
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    z-index: 10;
+    box-shadow: 0 0 40px rgba(255, 209, 102, 0.4);
+    width: 80%;
+    max-width: 500px;
+}
+
+.start-screen h2 {
+    color: #ef476f;
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.start-screen p {
+    color: #8ac6d1;
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.btn-start {
+    background: linear-gradient(to right, #06d6a0, #118ab2);
     color: white;
     border: none;
-    border-radius: 12px;
+    padding: 20px 40px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-radius: 15px;
     cursor: pointer;
     transition: all 0.3s;
     font-family: 'Courier New', monospace;
-    letter-spacing: 1px;
     text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 0 #073b4c;
+}
+
+.btn-start:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 0 #073b4c;
+    background: linear-gradient(to right, #118ab2, #06d6a0);
+}
+
+.btn-start:active {
+    transform: translateY(2px);
+    box-shadow: 0 3px 0 #073b4c;
+}
+
+/* ===== ЭКРАН ПРОИГРЫША ===== */
+.game-over-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(25, 25, 35, 0.95);
+    border: 4px solid #ef476f;
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    z-index: 10;
+    box-shadow: 0 0 40px rgba(239, 71, 111, 0.4);
+    width: 80%;
+    max-width: 500px;
+}
+
+.game-over-screen h2 {
+    color: #ffd166;
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.game-over-screen p {
+    color: #8ac6d1;
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    font-weight: bold;
+}
+
+#finalScore {
+    color: #ffd166;
+    font-size: 2rem;
+}
+
+.btn-restart {
+    background: linear-gradient(to right, #ef476f, #ff6b6b);
+    color: white;
+    border: none;
+    padding: 20px 40px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 0 #9d174d;
 }
 
 .btn-restart:hover {
     transform: translateY(-3px);
-    box-shadow: 0 7px 15px rgba(239, 71, 111, 0.4);
+    box-shadow: 0 9px 0 #9d174d;
     background: linear-gradient(to right, #ff6b6b, #ef476f);
 }
 
 .btn-restart:active {
-    transform: translateY(1px);
+    transform: translateY(2px);
+    box-shadow: 0 3px 0 #9d174d;
 }
 
-.bonus-info {
+/* ===== ПАНЕЛЬ УПРАВЛЕНИЯ ===== */
+.control-panel {
+    width: 100%;
     display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    margin: 25px 0;
-    gap: 15px;
-}
-
-.bonus-item {
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    background: rgba(255, 209, 102, 0.1);
+    background: rgba(83, 52, 131, 0.6);
+    border-radius: 12px;
+    padding: 15px 25px;
+    border: 3px solid #6a4c93;
+}
+
+.instructions {
+    background: rgba(239, 71, 111, 0.2);
     padding: 12px 20px;
     border-radius: 10px;
-    border: 2px solid #ffd166;
+    border-left: 4px solid #ef476f;
 }
 
-.bonus-icon {
-    width: 40px;
-    height: 40px;
-    image-rendering: pixelated;
+.instructions p {
+    margin: 6px 0;
+    font-size: 1rem;
+    color: #e9ecef;
+    font-weight: bold;
 }
 
-.bonus-item span {
+.instructions span {
+    color: #ffd166;
+}
+
+/* ===== МНОЖИТЕЛЬ ===== */
+.multiplier-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 150px;
+}
+
+#multiplierText {
+    font-size: 1.1rem;
     color: #ffd166;
     font-weight: bold;
-    font-size: 1.1rem;
+    text-shadow: 1px 1px 0 #000;
 }
 
-.footer {
-    text-align: center;
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #4a4a6d;
-    color: #8ac6d1;
-    font-size: 0.9rem;
+.multiplier-bar {
+    width: 150px;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #533483;
 }
 
-/* Мобильная адаптация */
+.multiplier-fill {
+    height: 100%;
+    background: linear-gradient(to right, #06d6a0, #ffd166);
+    width: 100%;
+    border-radius: 6px;
+    transition: width 0.3s;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
+        padding: 10px;
     }
     
     .game-header h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
+    }
+    
+    .top-panel {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    .score-container {
+        width: 100%;
+        justify-content: space-around;
+    }
+    
+    .bonus-tracker {
+        width: 100%;
+        justify-content: space-around;
+        gap: 10px;
+    }
+    
+    .bonus-counter {
+        min-width: 40px;
     }
     
     #gameCanvas {
         width: 100%;
         height: auto;
+        max-height: 500px;
     }
     
-    .score-value {
-        font-size: 2rem;
+    .start-screen,
+    .game-over-screen {
+        padding: 25px;
+        width: 90%;
     }
     
-    .bonus-info {
+    .control-panel {
         flex-direction: column;
-        align-items: center;
+        gap: 15px;
+        text-align: center;
     }
     
-    .bonus-item {
-        width: 80%;
-        justify-content: center;
+    .instructions {
+        width: 100%;
     }
 }
 
-/* Анимация пульсации для рестарта */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+/* Анимация для нового рекорда */
+@keyframes glow {
+    0% { text-shadow: 0 0 5px #ffd166; }
+    50% { text-shadow: 0 0 20px #ffd166, 0 0 30px #ef476f; }
+    100% { text-shadow: 0 0 5px #ffd166; }
 }
 
-.game-over .btn-restart {
-    animation: pulse 1.5s infinite;
+.new-record {
+    animation: glow 1s infinite;
 }
